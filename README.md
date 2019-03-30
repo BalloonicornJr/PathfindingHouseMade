@@ -1,13 +1,2 @@
 # PathfindingHouseMade
-This is the running of the house brewed pathfinding code, for use in CPP's AUVSI.
-
-
-Pathfinding to do list:
-
--Add current location to running list (to output later)
-
--Create array of all possible points it could go to
-
--Sort array by distance to goal
-
--Take smallest distance, set as current location, repeat
+This code reads a MissionPlanner mission from an already parsed text file, a set of obstacles (from an already parsed text file), calculates the optimal path between them, and outputs an updated mission between two points!
