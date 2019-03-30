@@ -19,11 +19,11 @@ namespace Pathfinding
         }
         public static Line LineFromPoints(Location A, Location B) // Creates a Line object from two Locations.
         {
-            if ((B.X - A.X) == 0)
+            if((B.X - A.X) == 0)
             {
                 return new Line(0, 0, true, A.X);
             }
-            double slope = ((B.Y - A.Y) / (B.X - A.X));
+            double slope = ((double)(B.Y - A.Y) / (double)(B.X - A.X));
             double yint = ((-slope * A.X) + A.Y);
             Line returningline = new Line(slope, yint);
             return returningline;
@@ -31,9 +31,11 @@ namespace Pathfinding
         public static bool LineIntersectsCircle(Location A, Location B, Circle C) // Determines if the line between two Locations intersects a Circle.
         {
             Line L = LineFromPoints(A, B);
+            //Console.WriteLine(L); // for debugging
             double x = 0;
             if (L.IsVertical(ref x)) // For vertical lines
             {
+                //Console.WriteLine("The line is vertical!"); //for debugging
                 double rad3 = Math.Pow(C.Radius, 2) - Math.Pow((x - C.Center.X), 2);
                 if (rad3 >= 0)
                 {
@@ -56,6 +58,7 @@ namespace Pathfinding
             }
             else if (L.Slope != 0) // For lines with nonzero slope
             {
+                //Console.WriteLine("The slope is nonzero!"); //for debugging
                 double rad1 = (Math.Pow((2 * L.Slope * (L.YInt - C.Center.Y) - (2 * C.Center.X)), 2) - (4 * (1 + Math.Pow(L.Slope, 2)) * (Math.Pow(C.Center.X, 2) + Math.Pow((L.YInt - C.Center.Y), 2) - Math.Pow(C.Radius, 2))));
                 if (rad1 >= 0)
                 {
@@ -82,14 +85,18 @@ namespace Pathfinding
             }
             else if (L.Slope == 0) // For lines with slope = zero
             {
+                //Console.WriteLine("The slope is horizontal!");
                 double rad2 = (Math.Pow(2 * C.Center.X, 2) - (4 * (Math.Pow(C.Center.X, 2) + Math.Pow(L.YInt - C.Center.Y, 2) - Math.Pow(C.Radius, 2))));
                 if (rad2 >= 0)
                 {
-                    double negb = -(2 * C.Center.X);
+                    //Console.WriteLine("Rad2 is greater than 0!"); //for debugging
+                    double negb = (2 * (double)C.Center.X);
                     double numeratorp = negb + Math.Sqrt(rad2);
                     double numeratorn = negb - Math.Sqrt(rad2);
                     double xval1 = numeratorp / 2;
+                    //Console.WriteLine($"Xval1 = {xval1}"); //for debugging
                     double xval2 = numeratorn / 2;
+                    //Console.WriteLine($"Xval2 = {xval2}"); //for debugging
                     if ((xval1 < A.X && xval1 > B.X) || (xval1 < B.X && xval1 > A.X))
                     {
                         return true;
@@ -102,16 +109,110 @@ namespace Pathfinding
                 }
                 else if (rad2 < 0)
                 {
+                    //Console.WriteLine("Rad2 is less than 0!"); //for debugging
                     return false;
                 }
             }
-            Console.WriteLine("Somehow, nothing happened!");
+            //Console.WriteLine("Somehow, nothing happened!");
             return false;
         }
-        public static void SortByDistance(Location[] points, Location goal)
+        public static bool ContainsLoc(HashSet<Location> points, Location point)
         {
-            //todo: Sort by distance
-            //replace Location[] points with List?
+            foreach (Location x in points)
+            {
+                if (point.Equals(x))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        public static int LocIndex(HashSet<Location> points, Location point)
+        {
+            int count = 0;
+            foreach (Location x in points)
+            {
+                if (point.Equals(x))
+                {
+                    return count;
+                }
+                count++;
+            }
+            return -1;
+        }
+        public static void PrintLocArray(HashSet<Location> points)
+        {
+            for (int i = 0; i < points.Count; i++)
+            {
+                Console.Write($"{points.ElementAt(i)} ");
+            }
+        }
+        public static void RemovePoint(HashSet<Location> points, Location point)
+        {
+            foreach (Location x in points)
+            {
+                if (point.Equals(x))
+                {
+                    Location test = x;
+                    points.Remove(test);
+                }
+            }
+        }
+        public static Location GetClosest(HashSet<Location> points, Location goal)
+        {
+            double min = Double.MaxValue;
+            int place = -1;
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (Distance(points.ElementAt(i), goal) < min)
+                {
+                    min = Distance(points.ElementAt(i), goal);
+                    place = i;
+                }
+            }
+            return points.ElementAt(place);
+        }
+        public static string LocationArrayToString(Location[] arr) // returns a long string that's every Location array element put together
+        {
+            if (arr.Length == 0 || arr == null)
+            {
+                return "";
+            }
+            string run = "";
+            foreach (Location obj in arr)
+            {
+                run += obj.ToString();
+                run += " ";
+            }
+            return run;
+        }
+        public static int GetNodeAtLoc(List<Node> nodes, Location loc) // finds the index of the node in the list of nodes that is at a certain position. assume all nodes are unique.
+        {
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                if (nodes[i].Point == loc)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
+        public static void CopyHashSetToArray(HashSet<Location> hash, ref Location[] arr)
+        {
+            if (hash.Count != arr.Length)
+            {
+                throw new Exception("Error in CopyHashSetToArray: The hashset and array were of different lengths.");
+            }
+
+            if (arr == null)
+            {
+                throw new ArgumentNullException(nameof(arr));
+            }
+
+            for (int i = 0; i < hash.Count; i++)
+            {
+                arr[i] = hash.ElementAt(i);
+            }
         }
     }
 }

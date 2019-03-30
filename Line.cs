@@ -29,5 +29,9 @@ namespace Pathfinding
         }
         public double Slope { get; set; }
         public double YInt { get; set; }
+        public override string ToString()
+        {
+            return $"A Line with slope {Slope} and Y-Intercept {YInt}";
+        }
     }
 }
