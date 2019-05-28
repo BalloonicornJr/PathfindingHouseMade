@@ -16,6 +16,7 @@ namespace Pathfinding
         public HashSet<Location> walls = new HashSet<Location>();
         public HashSet<Circle> obstacles = new HashSet<Circle>();
         public HashSet<Location> wallDistant = new HashSet<Location>();
+        public List<OrderedLocation> boundaries = new List<OrderedLocation>();
         public SquareGrid(double altitude, int width, int height, Location start, Location goal, double firstorder)
         {
             Altitude = altitude;
@@ -53,7 +54,7 @@ namespace Pathfinding
             }
             return false;
         }
-        public void GenerateDistantPoints() //This exists to account for turning radius. Passable points are 1.25x farther from the center of the obstacle than the radius. And floor'd or ceiling'd.
+        public void GenerateDistantPoints() //This exists to account for turning radius. Passable points are 1.5x farther from the center of the obstacle than the radius. And floor'd or ceiling'd.
         {
             foreach (Circle obstacle in obstacles)
             {
@@ -68,81 +69,30 @@ namespace Pathfinding
                 wallDistant.Add(new Location(obstacle.Center.X, negY));
             }
         }
-        public bool Passable(Location id)
+        public bool Passable(Location id) //The set of circumstances in which a point is passable
         {
             GenerateDistantPoints();
-            if (!InBounds(id))
+            if (!InBounds(id)) //"Is it within bounds?"
             {
                 return false;
             }
-            if (id.Equals(Goal) || id.Equals(Start))
+            if (id.Equals(Goal) || id.Equals(Start)) //"Is it the start or the goal?"
             {
                 return true;
             }
-            if (Util.ContainsLoc(walls, id))
+            if (Util.ContainsLoc(walls, id)) //"Is it in a wall?"
             {
                 return false;
             }
-            if (Util.ContainsLoc(wallDistant, id))
+            if (Util.ContainsLoc(wallDistant, id)) //"Is it 1.5x away from an obstacle?"
             {
                 return true;
             }
-            return false;
+            return false; //"Is it none?"
         }
-        public HashSet<Location> GeneratePath() //defunct
-        {
-            HashSet<Location> passablePoints = new HashSet<Location>();
-            HashSet<Location> been = new HashSet<Location>();
-            for (int y = 0; y <= Width; y++)
-            {
-                for (int x = 0; x <= Height; x++)
-                {
-                    if (Passable(new Location(x, y)))
-                    {
-                        passablePoints.Add(new Location(x, y));
-                        //Console.WriteLine($"Added {new Location(x, y)}!"); // For debugging
-                    }
-                }
-            }
-            Location current = Start;
-            been.Add(current);
-            while (!current.Equals(Goal))
-            {
-                //Console.WriteLine($"\nNow at {current}."); // For debugging
-                HashSet<Location> consider = new HashSet<Location>();
-                HashSet<Location> nextPossible = new HashSet<Location>();
-                foreach (Location test in passablePoints)
-                {
-                    bool testIsPassable = true;
-                    //Console.WriteLine($"Testing {test}!"); // For debugging
-                    foreach (Location wall in walls)
-                    {
-                        if (Util.LineIntersectsCircle(current, test, new Circle(wall, 0.5)))
-                        {
-                            testIsPassable = false;
-                        }
-                    }
-                    Console.WriteLine($"{test} = {testIsPassable}");
-                    if (testIsPassable && !Util.ContainsLoc(been, test))
-                    {
-                        consider.Add(test);
-                    }
-                }
-                if (consider.Count == 0)
-                {
-                    Console.WriteLine("No path found!");
-                    break;
-                }
-                been.Add(Util.GetClosest(consider, Goal));
-                current = Util.GetClosest(consider, Goal);
-                //Console.WriteLine($"Moving to {current}!"); // For debugging
-            }
-            return been;
-        }
-        public HashSet<Location> GetShortestPath()
+        public HashSet<Location> GetShortestPath() //Here be Dijkstra's Algorithm
         {
             CopyObstaclesToWalls();
-            /* This was replaced by GenerateNodes. */
             List<Node> nodes = GenerateNodes();
             nodes.Sort();
             /*foreach (Node n in nodes)
@@ -217,7 +167,7 @@ namespace Pathfinding
             }
             return been;
         }
-        public HashSet<Location> GetAllPassablePoints()
+        public HashSet<Location> GetAllPassablePoints() //Returns every single passable point on the playing field in one HashSet
         {
             HashSet<Location> passablePoints = new HashSet<Location>();
             for (int y = 0; y <= Height; y++)
@@ -232,7 +182,7 @@ namespace Pathfinding
             }
             return passablePoints;
         }
-        public List<Node> GenerateNodes()
+        public List<Node> GenerateNodes() //Generates the web of nodes including Start, Goal, and all points 1.5x away from obstacles.
         {
             HashSet<Location> passablePoints = GetAllPassablePoints();
             HashSet<Location> startPassable = new HashSet<Location>();
@@ -244,6 +194,17 @@ namespace Pathfinding
                     if (Util.LineIntersectsCircle(Start, passable, obstacle))
                     {
                         stest = false;
+                    }
+                }
+                for(int i = 0; i < boundaries.Count(); i++)
+                {
+                    if(i == boundaries.Count() - 1)
+                    {
+                        if (Util.LineIntersectsLine(Start, passable, boundaries[i], boundaries[0])) stest = false;
+                    }
+                    else
+                    {
+                        if (Util.LineIntersectsLine(Start, passable, boundaries[i], boundaries[i + 1])) stest = false;
                     }
                 }
                 if (stest) startPassable.Add(passable);
@@ -270,6 +231,17 @@ namespace Pathfinding
                                 break;
                             }
                         }
+                        for (int i = 0; i < boundaries.Count(); i++)
+                        {
+                            if (i == boundaries.Count() - 1)
+                            {
+                                if (Util.LineIntersectsLine(Start, passable, boundaries[i], boundaries[0])) test = false;
+                            }
+                            else
+                            {
+                                if (Util.LineIntersectsLine(Start, passable, boundaries[i], boundaries[i + 1])) test = false;
+                            }
+                        }
                         if (test) considerPassable.Add(passable);
                     }
                     Location[] considerPassableArr = new Location[considerPassable.Count];
@@ -281,7 +253,7 @@ namespace Pathfinding
             nodes.Sort();
             return nodes;
         }
-        public void CopyObstaclesToWalls()
+        public void CopyObstaclesToWalls() //Spaghetti code.
         {
             walls.Clear();
             foreach (Circle obst in obstacles)

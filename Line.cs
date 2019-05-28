@@ -9,6 +9,12 @@ namespace Pathfinding
     {
         private bool vertical; // "Is this line vertical?"
         private double xintvertical; // If vertical, this is used to keep the x-intercept
+        public Line()
+        {
+            Slope = 0;
+            YInt = 0;
+            vertical = false;
+        }
         public Line(double slope, double yint)
         {
             Slope = slope;
