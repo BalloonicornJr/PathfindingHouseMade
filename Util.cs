@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.
+    Generic;
 using System.Linq;
 using System.Text;
 
@@ -116,6 +117,80 @@ namespace Pathfinding
             //Console.WriteLine("Somehow, nothing happened!");
             return false;
         }
+        public static bool LineIntersectsLine(Location P1, Location P2, Location B1, Location B2)
+        {
+            Line Path = LineFromPoints(P1, P2);
+            Line Boundary = LineFromPoints(B1, B2);
+            double xint1 = 0, xint2 = 0;
+            if (Path.IsVertical(ref xint1) && Boundary.IsVertical(ref xint2)) // "Are these lines both vertical?"
+            {
+                if (xint1 != xint2) return false; // "Are they the same line?"
+                else return true;
+            }
+            if (Path.Slope == Boundary.Slope && !Path.IsVertical(ref xint1) && !Boundary.IsVertical(ref xint2)) // "Are these lines parallel?"
+            {
+                if (Path.YInt != Boundary.YInt) return false; // "Are they different lines?"
+                else return true;
+            }
+            // For if one of the lines is vertical, but not the other:
+            if ((Path.IsVertical(ref xint1) && !Boundary.IsVertical(ref xint2)) || (!Path.IsVertical(ref xint1) && Boundary.IsVertical(ref xint2)))
+            {
+                Line vert = new Line();
+                Line nonvert = new Line();
+                bool case1 = false, case2 = false;
+                if (Path.IsVertical(ref xint1))
+                {
+                    vert = Path;
+                    nonvert = Boundary;
+                    case1 = true; // Case 1: Path is vertical, Boundary isn't
+                    case2 = false;
+                }
+                else
+                {
+                    vert = Boundary;
+                    nonvert = Path;
+                    case2 = true; // Case 2: Boundary is vertical, Path isn't
+                    case1 = false;
+                }
+                double xint = 0;
+                vert.IsVertical(ref xint);
+                double yintersect = ((nonvert.Slope) * xint) + nonvert.YInt;
+                if (nonvert.Slope == 0)
+                {
+                    if (case1)
+                    {
+                        bool yinsideP = ((P1.Y <= yintersect && yintersect <= P2.Y) || (P2.Y <= yintersect && yintersect <= P1.Y));
+                        bool xinsideB = ((B1.X < xint && xint < B2.X) || (B2.X < xint && xint < B1.X));
+                        if (yinsideP && xinsideB) return true;
+                        else return false;
+                    }
+                    else if (case2)
+                    {
+                        bool yinsideB = ((B1.Y <= yintersect && yintersect <= B2.Y) || (B2.Y <= yintersect && yintersect <= B1.Y));
+                        bool xinsideP = ((P1.X < xint && xint < P2.X) || (P2.X < xint && xint < P1.X));
+                        if (yinsideB && xinsideP) return true;
+                        else return false;
+                    }
+                }
+                bool ybetweenB = ((B1.Y <= yintersect && yintersect <= B2.Y) || (B2.Y <= yintersect && yintersect <= B1.Y));
+                bool ybetweenP = ((P1.Y <= yintersect && yintersect <= P2.Y) || (P2.Y <= yintersect && yintersect <= P1.Y));
+                if (ybetweenB && ybetweenP) return true;
+                else return false;
+            }
+            //For if both lines are nonvertical:
+            else
+            {
+                double xintersect = ((double)(Boundary.YInt - Path.YInt) / (Path.Slope - Boundary.Slope));
+                bool betweenP = ((P1.X <= xintersect && xintersect <= P2.X) || P2.X <= xintersect && xintersect <= P1.X);
+                bool betweenB = ((B1.X <= xintersect && xintersect <= B2.X) || B2.X <= xintersect && xintersect <= B1.X);
+                if (betweenP && betweenB) return true;
+                else return false; //[insert *that was easy* button here]
+            }
+            Console.WriteLine("Something weird happened!");
+            Console.WriteLine("Boundary calculations messed up.\nPress enter to continue...");
+            Console.Read();
+            return false;
+        }
         public static bool ContainsLoc(HashSet<Location> points, Location point)
         {
             foreach (Location x in points)
@@ -213,6 +288,18 @@ namespace Pathfinding
             {
                 arr[i] = hash.ElementAt(i);
             }
+        }
+        public static int GetIndexOfOrder(int order, List<Waypoint> waypoints)
+        {
+            int index = -1;
+            for(int i = 0; i < waypoints.Count; i++)
+            {
+                if(waypoints[i].Order == order)
+                {
+                    index = i;
+                }
+            }
+            return index;
         }
     }
 }

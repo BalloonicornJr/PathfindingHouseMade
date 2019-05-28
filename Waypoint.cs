@@ -7,14 +7,14 @@ namespace Pathfinding
 {
     class Waypoint : IComparable<Waypoint>
     {
-        public Waypoint(double o, double lat, double lon, double alt)
+        public Waypoint(double o, double lat, double lon, double alt) // Constructor that takes in an order, latitude, longitude, and altitude
         {
             Order = o;
             Latitude = lat;
             Longitude = lon;
             Altitude = alt;
         }
-        public Waypoint()
+        public Waypoint() // Default constructor: Order = -1, (0,0) latitude & longitude, -1 altitude
         {
             Order = -1;
             Latitude = 0;
@@ -32,7 +32,7 @@ namespace Pathfinding
                 return this.Order.CompareTo(otherWp.Order);
             }
         }
-        public override string ToString()
+        public override string ToString() // converts to string: order,latitude,longitude,altitude
         {
             return $"{Order},{Latitude},{Longitude},{Altitude}";
         }
